@@ -21,9 +21,9 @@ ui <- fluidPage(
 
       # Input: Slider for the number of observations to generate ----
       sliderInput("n", "Number of observations:",
-                  value = 500,
-                  min = 1,
-                  max = 1000),
+                  value = 20,
+                  min = 5,
+                  max = 100),
 
       # Input: Selector for choosing parameter to estimate ----
       selectInput(inputId = "parameter",
@@ -96,6 +96,16 @@ server <- function(input, output) {
       )
     )
   })
+  
+  tabq <- reactive({
+    tibble(
+      x2 = switch(
+        input$parameter,
+        moy = qt(seq(1e-4, 1-1e-4, len = 10000),input$n-1),
+        var = qchisq(seq(1e-4, 1-1e-4, len = 10000),input$n-1)
+      )
+    )
+  })
 
 
   #
@@ -103,6 +113,23 @@ server <- function(input, output) {
     ggplot(tab(), aes(x = x, y = y)) +
       geom_line() +
       labs(x = "X", y = expression(f[X](x)))
+    
+    ggplot(tabq(),aes(x2, y = 0, fill = factor(stat(quantile)))) + 
+      ggridges::stat_density_ridges(
+        geom = "density_ridges_gradient",
+        calc_ecdf = TRUE,
+        quantiles = 1-(input$alpha/100)
+      ) +
+      scale_fill_manual(
+        name = paste("Quantile d'ordre ",1-(input$alpha/100), sep=""),
+        values = c("pink", "blue"),
+        labels = scales::label_parse()(c("P(X <= q[0.90]) == 0.90", "P(X >= q[0.90]) == 0.10"))
+      ) + 
+      labs(x = "", y = "") + 
+      theme_bw() + 
+      geom_vline(xintercept = qt(1-input$alpha/100,input$n-1), color = "black", linetype = "dashed") +
+      geom_vline(xintercept = qt(input$alpha/100,input$n-1), color = "black", linetype = "dashed") +
+      annotate(geom = "label", x = qt(1-input$alpha/100,input$n-1), y = -0.04, label = expression(q[1-\alpha]))
   })
 }
 
@@ -112,19 +139,20 @@ shinyApp(ui = ui, server = server)
 #?sliderInput
 # exists("parameter")
 #?geom_line
-
-#?runApp
-#runApp("C:\Users\valentin\Documents\Universit?\Stage L3\Repositories\stage-vfrappier\Shiny app")
-#?switch
-#?distribution
-#runExample("01_hello")      # a histogram
-# runExample("02_text")       # tables and data frames
-# runExample("03_reactivity") # a reactive expression
-# runExample("04_mpg")        # global variables
-#runExample("05_sliders")    # slider bars
-#runExample("06_tabsets")    # tabbed panels
-#runExample("07_widgets")    # help text and submit buttons
-#runExample("08_html")       # Shiny app built from HTML
-#runExample("09_upload")     # file upload wizard
-#runExample("10_download")   # file download wizard
+# ?stat_density_ridges
+# 
+# #?runApp
+# #runApp("C:\Users\valentin\Documents\Universit?\Stage L3\Repositories\stage-vfrappier\Shiny app")
+# #?switch
+# #?distribution
+# #runExample("01_hello")      # a histogram
+#  runExample("02_text")       # tables and data frames
+# # runExample("03_reactivity") # a reactive expression
+# # runExample("04_mpg")        # global variables
+# #runExample("05_sliders")    # slider bars
+# runExample("06_tabsets")    # tabbed panels
+# #runExample("07_widgets")    # help text and submit buttons
+# #runExample("08_html")       # Shiny app built from HTML
+# #runExample("09_upload")     # file upload wizard
+# #runExample("10_download")   # file download wizard
 #runExample("11_timer")      # an automated timer
