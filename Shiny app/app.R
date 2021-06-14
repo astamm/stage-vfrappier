@@ -112,41 +112,48 @@ server <- function(input, output) {
   output$distPlot <- renderPlot({
     ggplot(tab(), aes(x = x, y = y)) +
       geom_line() +
-      labs(x = "X", y = expression(f[X](x)))
+      labs(x = "X", y = expression(f[X](x))) 
     
-    ggplot(tabq(),aes(x2, y = 0, fill = factor(stat(quantile)))) +
+    ggplot(tabq(),aes(x2, y = 0, fill = factor(stat(quantile))), show.legend = FALSE) +
       ggridges::stat_density_ridges(
         geom = "density_ridges_gradient",
         calc_ecdf = TRUE,
-        quantiles = c(input$alpha/100,1-input$alpha/100)
+        quantiles = c(input$lambda*(input$alpha/100),1-(input$alpha/100)*(1-input$lambda))
       ) +
       scale_fill_manual(
-        name = paste("Quantiles d'ordre ",input$alpha/100," et ", 1-(input$alpha/100), sep=""),
+        name = paste("Quantiles d'ordre ",input$lambda*(input$alpha/100)," et ", 1-(input$alpha/100)*(1-input$lambda), sep=""),
         values = c("blue","pink","blue"),
-        labels = scales::label_parse()(c("P(X <= q[0.90]) == 0.90", "P(X >= q[0.90]) ==0.10"))
+        labels = scales::label_parse()(c("P(X <= q[0.90]) == 0.90", "P(X >= q[0.90]) == 0.10"))
       ) +
       labs(x = "", y = "") +
       # theme(legend.position = none) +
       theme_bw() +
       geom_vline(xintercept = switch(input$parameter,
-                                     moy = qt(input$alpha/100,input$n-1),
-                                     var = qchisq(input$alpha/100,input$n-1)), 
+                                     moy = qt(input$lambda*(input$alpha/100),input$n-1),
+                                     var = qchisq(input$lambda*(input$alpha/100),input$n-1)), 
                  color = "black", linetype = "dashed") +
       
       annotate(geom = "label", x = switch(input$parameter,
-                                          moy = qt(input$alpha/100,input$n-1),
-                                          var = qchisq(input$alpha/100,input$n-1)),
-               y = -0.04, label = expression(q[alpha])) +
+                                          moy = qt(input$lambda*(input$alpha/100),input$n-1),
+                                          var = qchisq(input$lambda*(input$alpha/100),input$n-1)),
+                               y = switch(input$parameter,
+                                          moy = -0.04,
+                                          var =-0.001),
+               label = expression(q[alpha])) +
       
       geom_vline(xintercept = switch(input$parameter,
-                                     moy = qt(1-input$alpha/100,input$n-1),
-                                     var = qchisq(1-input$alpha/100,input$n-1)), 
+                                     moy = qt(1-(input$alpha/100)*(1-input$lambda),input$n-1),
+                                     var = qchisq(1-(input$alpha/100)*(1-input$lambda),input$n-1)), 
                  color = "black", linetype = "dashed") +
       
       annotate(geom = "label", x = switch(input$parameter,
-                                          moy = qt(1-input$alpha/100,input$n-1),
-                                          var = qchisq(1-input$alpha/100,input$n-1)),
-               y = -0.04, label = expression(q[1-alpha]))
+                                          moy = qt(1-(input$alpha/100)*(1-input$lambda),input$n-1),
+                                          var = qchisq(1-(input$alpha/100)*(1-input$lambda),input$n-1)),
+               y = switch(input$parameter,
+                          moy = -0.04,
+                          var =-0.001),
+               label = expression(q[1-alpha])) +
+      theme(legend.position = "none")
   })
 }
 shinyApp(ui = ui, server = server)
