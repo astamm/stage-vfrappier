@@ -96,6 +96,7 @@ ui <- fluidPage(
                   tabPanel("Plot", plotOutput("distPlot")),
                   tabPanel("Table", tableOutput("table")),
                   tabPanel("Summary", tableOutput("table2")),
+                  tabPanel("CItibble", tableOutput("table3")),
                   tabPanel("CI danse", plotOutput("CIPlot"))
                   
       )
@@ -377,7 +378,7 @@ et ", 1-(input$alpha/100)*(1-input$lambda), sep=""),
   # table2$CIlength <-unlist(table2$CIlength)
   
   tabnech <-reactive ({
-    tibble(
+    tib <- tibble(
       X = 1:input$nIC,
       X_n = lapply(X, rnorm, mean = input$mu, sd = input$sigma),
       L = sapply(X_n,compute_lb,alpha = input$alpha, lambda = input$lambda, parameter = input$parameter),
@@ -387,16 +388,11 @@ et ", 1-(input$alpha/100)*(1-input$lambda), sep=""),
                  var = sapply(X_n, var)
       )
     )
+    subset(tib,select=-X_n)
   })
   
   output$table3 <-renderTable({
-    tibble(
-      location = c("mode","mean", "med"),
-      lambda  = c(lambdaopt_mode(),lambdaopt_mean(),lambdaopt_med()),
-      CIlength = c(ci_minimal_length_var(lambdaopt_mode(), n = input$n, s2 = 1, input$alpha),
-                   ci_minimal_length_var(lambdaopt_mean(), n = input$n, s2 = 1, input$alpha),
-                   ci_minimal_length_var(lambdaopt_med(), n = input$n, s2 = 1, input$alpha))
-    )
+    tabnech()
   })
   # tabnech$M <- unlist(tabnech$M)
   # tabnech$X <- unlist(tabnech$X)
