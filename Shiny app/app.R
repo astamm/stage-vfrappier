@@ -7,7 +7,9 @@ library(shiny)
 library(ggplot2)
 library(tidyverse)
 library(tibble)
-library (shinyjs)
+# library (shinyjs)
+# library(hablar)
+
 
 # Define UI for the app
 ui <- fluidPage(
@@ -21,6 +23,18 @@ ui <- fluidPage(
     # Sidebar panel for inputs ----
     sidebarPanel(
       
+      # titlePanel("Sample simulation :"),
+      p("Choose the value of the mean, and the value of the standard deviation of the normal distribution"),
+      
+      numericInput("mu", "Select a value for mu",
+                   value = 0,
+                   min = -5,
+                   max = 5),
+      
+      numericInput("sigma", "Select a value for sigma",
+                   value = 1,
+                   min = 1,
+                   max= 10),
       # Input: Slider for the number of observations ----
       sliderInput("n", "Sample size:",
                   value = 20,
@@ -66,7 +80,12 @@ ui <- fluidPage(
                   min = 0,
                   max = 1,
                   value = 0.5,
-                  step = 0.01)
+                  step = 0.01),
+      
+      numericInput("nIC", "Select the number of CI you would like to plot",
+                   value = 10,
+                   min = 1,
+                   max = 50)
       
       
     ),
@@ -75,18 +94,16 @@ ui <- fluidPage(
       
       tabsetPanel(type = "tabs",
                   tabPanel("Plot", plotOutput("distPlot")),
-                  tabPanel("Summary", verbatimTextOutput("summary")),
-                  tabPanel("Table", tableOutput("table"))
+                  tabPanel("Table", tableOutput("table")),
+                  tabPanel("Summary", tableOutput("table2")),
+                  tabPanel("CI danse", plotOutput("CIPlot"))
+                  
       )
       
     )
     
   )
 )
-
-# VALENTIN: ici il faut integrer un param suppémentaire pour savoir sur quelle chose doit se faire la centralisation
-# + reecrire les fonctions pour la moyenne qui ne sont pas bonnes
-
 
 #Length of the CI to minimize via uniroot in lambda_opt for mean and variance
 ci_minimal_length_mean <- function(w, n, s2 = 1, alpha) {
@@ -96,46 +113,67 @@ ci_minimal_length_mean <- function(w, n, s2 = 1, alpha) {
 }
 
 ci_minimal_length_var <- function(w, n, s2 = 1, alpha) {
-  w <- 1 - w
-  qsup <- qchisq(1 - w * alpha, df = n - 1)
-  qinf <- qchisq((1 - w) * alpha, df = n - 1)
+  qsup <- qchisq(1 - (1-w) * alpha, df = n - 1)    #Production of NAN
+  qinf <- qchisq(w * alpha, df = n - 1)        ##if na.omit, CIlength is of size 0
   s2 * (n-1) * (1 / qinf - 1 / qsup)
 }
 
 #Functions representing the centered aspect of the CI. CI centered => corresponding function = 0
 ci_centered_symmetric_mean <- function(w, n, s2 = 2, alpha) {
-  qsup <- qt(1 - w * alpha, df = n - 1)
-  qinf <- qt((1 - w) * alpha, df = n - 1)
-  2*mean(rt(n,df=n-1)) + sqrt(s2/n)*(qsup-qinf)
+  qsup <- qt(1 - (1-w) * alpha, df = n - 1)
+  qinf <- qt(w * alpha, df = n - 1)
+  -2*sqrt(s2/n)*(qsup + qinf)
 }
 
 ci_centered_symmetric_varmode <- function(w, n, s2 = 2, alpha) {
-  w <- 1 - w
-  qsup <- qchisq(1 - w * alpha, df = n - 1)
-  qinf <- qchisq((1 - w) * alpha, df = n - 1)
+  qsup <- qchisq(1 - (1-w) * alpha, df = n - 1)
+  qinf <- qchisq(w * alpha, df = n - 1)
   mode = s2 * (n-1) * (1 / qinf + 1 / qsup - 2/(n-3))
 }
 
 
 ci_centered_symmetric_varmean <- function(w, n, s2 = 2, alpha) {
   w <- 1 - w
-  qsup <- qchisq(1 - w * alpha, df = n - 1)
-  qinf <- qchisq((1 - w) * alpha, df = n - 1)
+  qsup <- qchisq(1 - (1-w) * alpha, df = n - 1)
+  qinf <- qchisq(w * alpha, df = n - 1)
   mean = s2 * ((n-1) * (1 / qinf + 1 / qsup) - 2) 
   
 }
 
 ci_centered_symmetric_varmed <- function(w, n, s2 = 2, alpha) {
   w <- 1 - w
-  qsup <- qchisq(1 - w * alpha, df = n - 1)
-  qinf <- qchisq((1 - w) * alpha, df = n - 1)
+  qsup <- qchisq(1 - (1-w) * alpha, df = n - 1)
+  qinf <- qchisq(w * alpha, df = n - 1)
   med = s2 * ((n-1) * (1 / qinf + 1 / qsup) - 2/(1-2/(n-1))^3)
+}
+
+compute_lb <- function(Xn,alpha,lambda, parameter){
+  n = length(Xn)
+  switch(parameter,
+         moy = mean(Xn)-(sd(Xn)/sqrt(n))*qt(1-alpha*(1-lambda),n-1),
+         var = (n-1)*(sd(Xn)^2)/qchisq(1-alpha*(1-lambda),n-1)
+  )
+  
+}
+
+compute_ub <- function(Xn,alpha,lambda,parameter){
+  n = length(Xn)
+  switch(parameter,
+         moy = mean(Xn)-(sd(Xn)/sqrt(n))*qt(alpha*lambda,n-1),
+         var =(n-1)*(sd(Xn)^2)/qchisq(alpha*lambda,n-1)
+  )
+  
 }
 
 eps0 <- .Machine$double.eps
 
+f1 <- function (X, mu, sigma){
+  rnorm(length(X), mu, sigma)
+}
+
 # Define server logic required to draw the distribution ----
 server <- function(input, output, session) {
+  
   
   #Calculation of the lambda corresponding to the best CI for both parameter mean and variance,
   #for an alpha and a sample size selected by the user
@@ -188,6 +226,28 @@ server <- function(input, output, session) {
            )
     )
   })
+  
+  lambdaopt_mode <-reactive({uniroot(
+    f = ci_centered_symmetric_varmode,
+    interval = c(eps0, 1 - eps0),
+    n = input$n,
+    alpha = input$alpha / 100
+  )$root})
+  
+  lambdaopt_mean <-reactive({ uniroot(
+    f = ci_centered_symmetric_varmean,
+    interval = c(eps0, 1 - eps0),
+    n = input$n,
+    alpha = input$alpha / 100
+  )$root})
+  
+  lambdaopt_med <-reactive({ uniroot(
+    f = ci_centered_symmetric_varmed,
+    interval = c(eps0, 1 - eps0),
+    n = input$n,
+    alpha = input$alpha / 100
+  )$root})
+  
   #creating a data frame in order to draw the distribution : variables x = choice between two 
   #sequances of values abscisse of the distribution ; y = choice between two probability laws
   tab <- reactive({
@@ -218,6 +278,7 @@ server <- function(input, output, session) {
       )
     )
   })
+  
   #Output that plots the distribution selected, the quantile of order lambda*alpha and 
   #1-alpha(1-lambda
   output$distPlot <- renderPlot({
@@ -296,7 +357,60 @@ et ", 1-(input$alpha/100)*(1-input$lambda), sep=""),
   })
   
   output$table <- renderTable({
-    lambda_opt()
+    tibble(
+      optimal_lambda = lambda_opt()
+    )
   })
+  
+  output$table2 <-renderTable({
+    tibble(
+      location = c("mode","mean", "med"),
+      lambda  = c(lambdaopt_mode(),lambdaopt_mean(),lambdaopt_med()),
+      CIlength = c(ci_minimal_length_var(lambdaopt_mode(), n = input$n, s2 = 1, input$alpha),
+                   ci_minimal_length_var(lambdaopt_mean(), n = input$n, s2 = 1, input$alpha),
+                   ci_minimal_length_var(lambdaopt_med(), n = input$n, s2 = 1, input$alpha))
+    )
+  })
+  
+  # table2$location <-unlist(table2$location)
+  # table2$lambda <-unlist( table2$lambda)
+  # table2$CIlength <-unlist(table2$CIlength)
+  
+  tabnech <-reactive ({
+    tibble(
+      X = 1:input$nIC,
+      X_n = lapply(X, rnorm, mean = input$mu, sd = input$sigma),
+      L = sapply(X_n,compute_lb,alpha = input$alpha, lambda = input$lambda, parameter = input$parameter),
+      U = sapply(X_n,compute_ub,alpha = input$alpha, lambda = input$lambda, parameter = input$parameter),
+      M = switch(input$parameter,
+                 moy = sapply(X_n, mean),
+                 var = sapply(X_n, var)
+      )
+    )
+  })
+  
+  output$table3 <-renderTable({
+    tibble(
+      location = c("mode","mean", "med"),
+      lambda  = c(lambdaopt_mode(),lambdaopt_mean(),lambdaopt_med()),
+      CIlength = c(ci_minimal_length_var(lambdaopt_mode(), n = input$n, s2 = 1, input$alpha),
+                   ci_minimal_length_var(lambdaopt_mean(), n = input$n, s2 = 1, input$alpha),
+                   ci_minimal_length_var(lambdaopt_med(), n = input$n, s2 = 1, input$alpha))
+    )
+  })
+  # tabnech$M <- unlist(tabnech$M)
+  # tabnech$X <- unlist(tabnech$X)
+  # tabnech$U <- unlist(tabnech$U)
+  # tabnech$L <- unlist(tabnech$L)
+  
+  output$CIPlot <-renderPlot({
+    
+    ggplot(tabnech(), aes(x = M, y = X)) +
+      geom_point(size = 4) +
+      geom_errorbarh(aes(xmax = U, xmin = L))
+    
+  })
+  
 }
 shinyApp(ui = ui, server = server)
+
