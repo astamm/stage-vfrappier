@@ -83,7 +83,7 @@ ui <- fluidPage(
                   step = 0.01),
 
       numericInput("nIC", "Select the number of CI you would like to plot",
-                   value = 10,
+                   value = 20,
                    min = 1,
                    max = 50)
 
@@ -148,20 +148,20 @@ ci_centered_symmetric_varmed <- function(w, n, alpha, s2 = 2) {
   (n-1) * s2 * (1 / qinf + 1 / qsup) - 2 * cen
 }
 
-compute_lb <- function(Xn,alpha,lambda, parameter){
-  n = length(Xn)
+compute_lb <- function(X_n,alpha,lambda, parameter){
+  n = length(X_n)
   switch(parameter,
-         moy = mean(Xn)-(sd(Xn)/sqrt(n))*qt(1-alpha*(1-lambda),n-1),
-         var = (n-1)*(sd(Xn)^2)/qchisq(1-alpha*(1-lambda),n-1)
+         moy = mean(X_n)-(sd(X_n)/sqrt(n))*qt(1-alpha*(1-lambda),n-1),
+         var = (n-1)*(sd(X_n)^2)/qchisq(1-alpha*(1-lambda),n-1)
   )
 
 }
 
-compute_ub <- function(Xn,alpha,lambda,parameter){
-  n = length(Xn)
+compute_ub <- function(X_n,alpha,lambda,parameter){
+  n = length(X_n)
   switch(parameter,
-         moy = mean(Xn)-(sd(Xn)/sqrt(n))*qt(alpha*lambda,n-1),
-         var =(n-1)*(sd(Xn)^2)/qchisq(alpha*lambda,n-1)
+         moy = mean(X_n)-(sd(X_n)/sqrt(n))*qt(alpha*lambda,n-1),
+         var =(n-1)*(sd(X_n)^2)/qchisq(alpha*lambda,n-1)
   )
 
 }
@@ -388,11 +388,9 @@ et ", 1-(input$alpha/100)*(1-input$lambda), sep=""),
   })
 
   output$CIPlot <-renderPlot({
-
     ggplot(tabnech(), aes(x = M, y = X)) +
       geom_point(size = 4) +
       geom_errorbarh(aes(xmax = U, xmin = L))
-
   })
 
 }
