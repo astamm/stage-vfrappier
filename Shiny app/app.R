@@ -83,7 +83,7 @@ ui <- fluidPage(
                   step = 0.01),
       
       numericInput("nIC", "Select the number of CI you would like to plot",
-                   value = 10,
+                   value = 20,
                    min = 1,
                    max = 50)
       
@@ -148,20 +148,20 @@ ci_centered_symmetric_varmed <- function(w, n, s2 = 2, alpha) {
   med = s2 * ((n-1) * (1 / qinf + 1 / qsup) - 2/(1-2/(n-1))^3)
 }
 
-compute_lb <- function(Xn,alpha,lambda, parameter){
-  n = length(Xn)
+compute_lb <- function(X_n,alpha,lambda, parameter){
+  n = length(X_n)
   switch(parameter,
-         moy = mean(Xn)-(sd(Xn)/sqrt(n))*qt(1-alpha*(1-lambda),n-1),
-         var = (n-1)*(sd(Xn)^2)/qchisq(1-alpha*(1-lambda),n-1)
+         moy = mean(X_n)-(sd(X_n)/sqrt(n))*qt(1-alpha*(1-lambda),n-1),
+         var = (n-1)*(sd(X_n)^2)/qchisq(1-alpha*(1-lambda),n-1)
   )
   
 }
 
-compute_ub <- function(Xn,alpha,lambda,parameter){
-  n = length(Xn)
+compute_ub <- function(X_n,alpha,lambda,parameter){
+  n = length(X_n)
   switch(parameter,
-         moy = mean(Xn)-(sd(Xn)/sqrt(n))*qt(alpha*lambda,n-1),
-         var =(n-1)*(sd(Xn)^2)/qchisq(alpha*lambda,n-1)
+         moy = mean(X_n)-(sd(X_n)/sqrt(n))*qt(alpha*lambda,n-1),
+         var =(n-1)*(sd(X_n)^2)/qchisq(alpha*lambda,n-1)
   )
   
 }
@@ -367,9 +367,9 @@ et ", 1-(input$alpha/100)*(1-input$lambda), sep=""),
     tibble(
       location = c("mode","mean", "med"),
       lambda  = c(lambdaopt_mode(),lambdaopt_mean(),lambdaopt_med()),
-      CIlength = c(ci_minimal_length_var(lambdaopt_mode(), n = input$n, s2 = 1, input$alpha),
-                   ci_minimal_length_var(lambdaopt_mean(), n = input$n, s2 = 1, input$alpha),
-                   ci_minimal_length_var(lambdaopt_med(), n = input$n, s2 = 1, input$alpha))
+      CIlength = c(ci_minimal_length_var(lambdaopt_mode(), n = input$n, s2 = 1, input$alpha/100),
+                   ci_minimal_length_var(lambdaopt_mean(), n = input$n, s2 = 1, input$alpha/100),
+                   ci_minimal_length_var(lambdaopt_med(), n = input$n, s2 = 1, input$alpha/100))
     )
   })
   
@@ -381,8 +381,8 @@ et ", 1-(input$alpha/100)*(1-input$lambda), sep=""),
     tib <- tibble(
       X = 1:input$nIC,
       X_n = lapply(X, rnorm, mean = input$mu, sd = input$sigma),
-      L = sapply(X_n,compute_lb,alpha = input$alpha, lambda = input$lambda, parameter = input$parameter),
-      U = sapply(X_n,compute_ub,alpha = input$alpha, lambda = input$lambda, parameter = input$parameter),
+      L = sapply(X_n,compute_lb,alpha = input$alpha/100, lambda = input$lambda, parameter = input$parameter),
+      U = sapply(X_n,compute_ub,alpha = input$alpha/100, lambda = input$lambda, parameter = input$parameter),
       M = switch(input$parameter,
                  moy = sapply(X_n, mean),
                  var = sapply(X_n, var)
@@ -403,8 +403,19 @@ et ", 1-(input$alpha/100)*(1-input$lambda), sep=""),
     
     ggplot(tabnech(), aes(x = M, y = X)) +
       geom_point(size = 4) +
-      geom_errorbarh(aes(xmax = U, xmin = L))
-    
+      geom_errorbarh(aes(xmax = U, xmin = L)) 
+    # +
+    #   geom_vline(xintercept = switch(input$parameter,
+    #                                  moy = mean(tabnech$X_n)-(sd(tabnech$X_n)/sqrt(n))*qt(1-input$alpha/100*(1-lambda_opt()),n-1),
+    #                                  var = (n-1)*(sd(tabnech$X_n)^2)/qchisq(1-input$alpha/100*(1-lambda_opt()),n-1)
+    #                                  ),
+    #              color = "orange") +
+    #   geom_vline (xintercept = switch(input$parameter,
+    #                                   moy = mean(tabnech$X_n)-(sd(tabnech$X_n)/sqrt(n))*qt(input$alpha/100*lambda_opt(),n-1),
+    #                                   var =(n-1)*(sd(tabnech$X_n)^2)/qchisq(input$alpha/100*lambda_opt(),n-1)
+    #                                   ),
+    #               color = "orange")
+
   })
   
 }
