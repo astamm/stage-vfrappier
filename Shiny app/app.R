@@ -7,6 +7,7 @@ library(shiny)
 library(ggplot2)
 library(tidyverse)
 library(tibble)
+library(dplyr)
 # library (shinyjs)
 # library(hablar)
 
@@ -85,7 +86,7 @@ ui <- fluidPage(
       numericInput("nIC", "Select the number of CI you would like to plot",
                    value = 20,
                    min = 1,
-                   max = 50)
+                   max = 200)
 
 
     ),
@@ -95,15 +96,15 @@ ui <- fluidPage(
       tabsetPanel(type = "tabs",
                   tabPanel("Plot", plotOutput("distPlot")),
                   tabPanel("Table", tableOutput("table")),
-                  tabPanel("Summary", tableOutput("table2")),
+                  tabPanel("Summary", br(), textOutput("msg1summary"), br(), tableOutput("table2"), br(), textOutput("msg2summary")),
                   tabPanel("CItibble", tableOutput("table3")),
-                  tabPanel("CI danse", plotOutput("CIPlot"))
+                  tabPanel("CI danse", plotOutput("CIPlot"), br(), textOutput("msg1CIdance"), br(), tableOutput("percentage"))
 
       )
 
     )
-
   )
+
 )
 
 #Length of the CI to minimize via uniroot in lambda_opt for mean and variance
@@ -168,10 +169,20 @@ compute_ub <- function(X_n,alpha,lambda,parameter){
 
 eps0 <- .Machine$double.eps
 
+# f1 <- function (X_n,U,L,mu){
+#   for (i in range(length(X_n))){
+#     if (U[i]<mu){
+#       return (U[i])
+#     } else if(L[i]>mu){
+#       return (L[i])
+#     }
+#   }
+# }
+
 # Define server logic required to draw the distribution ----
 server <- function(input, output, session) {
 
-
+  
   #Calculation of the lambda corresponding to the best CI for both parameter mean and variance,
   #for an alpha and a sample size selected by the user
   lambda_opt <- reactive({
@@ -224,26 +235,34 @@ server <- function(input, output, session) {
     )
   })
 
-  lambdaopt_mode <-reactive({uniroot(
+  lambdaopt_mode_var <-reactive({uniroot(
     f = ci_centered_symmetric_varmode,
     interval = c(eps0, 1 - eps0),
     n = input$n,
     alpha = input$alpha / 100
   )$root})
 
-  lambdaopt_mean <-reactive({ uniroot(
+  lambdaopt_mean_var <-reactive({ uniroot(
     f = ci_centered_symmetric_varmean,
     interval = c(eps0, 1 - eps0),
     n = input$n,
     alpha = input$alpha / 100
   )$root})
 
-  lambdaopt_med <-reactive({ uniroot(
+  lambdaopt_med_var <-reactive({ uniroot(
     f = ci_centered_symmetric_varmed,
     interval = c(eps0, 1 - eps0),
     n = input$n,
     alpha = input$alpha / 100
   )$root})
+  
+  lambdaopt_moy <-reactive({ uniroot(
+    f = ci_centered_symmetric_mean,
+    interval = c(eps0, 1 - eps0),
+    n = input$n,
+    alpha = input$alpha / 100
+  )$root})
+  
 
   #creating a data frame in order to draw the distribution : variables x = choice between two
   #sequances of values abscisse of the distribution ; y = choice between two probability laws
@@ -362,25 +381,47 @@ et ", 1-(input$alpha/100)*(1-input$lambda), sep=""),
   output$table2 <-renderTable({
     tibble(
       location = c("mode","mean", "med"),
-      lambda  = c(lambdaopt_mode(),lambdaopt_mean(),lambdaopt_med()),
-      CIlength = c(ci_minimal_length_var(lambdaopt_mode(), n = input$n, s2 = 1, input$alpha / 100),
-                   ci_minimal_length_var(lambdaopt_mean(), n = input$n, s2 = 1, input$alpha / 100),
-                   ci_minimal_length_var(lambdaopt_med() , n = input$n, s2 = 1, input$alpha / 100))
+      lambda  = switch(input$parameter,
+                       moy = c(lambdaopt_moy(),lambdaopt_moy(),lambdaopt_moy()),
+                       var = c(lambdaopt_mode_var(),lambdaopt_mean_var(),lambdaopt_med_var())),
+      CIlength = switch(input$parameter,
+                        moy = c(ci_minimal_length_mean(lambdaopt_moy(), n = input$n, s2 = 1, input$alpha / 100),
+                                ci_minimal_length_mean(lambdaopt_moy(), n = input$n, s2 = 1, input$alpha / 100),
+                                ci_minimal_length_mean(lambdaopt_moy() , n = input$n, s2 = 1, input$alpha / 100)),
+                        var = c(ci_minimal_length_var(lambdaopt_mode_var(), n = input$n, s2 = 1, input$alpha / 100),
+                                ci_minimal_length_var(lambdaopt_mean_var(), n = input$n, s2 = 1, input$alpha / 100),
+                                ci_minimal_length_var(lambdaopt_med_var() , n = input$n, s2 = 1, input$alpha / 100))
+                        )
     )
   })
+  
+  output$msg1summary <- renderText(
+    "Is displayed bellow a table with the length of the optimum CI, along 
+    with the lambda corresponding to such CI, for each quantity to center the CI on"
+  )
+  
+  output$msg2summary <- renderText(
+    switch(input$parameter,
+           moy = "Let's note that for a symetrical distribution, the mode, mean and median are mingeled wich explain the redundancy of the results",
+           var = "")
+  )
 
   tabnech <-reactive ({
     tib <- tibble(
       X = 1:input$nIC,
-      X_n = lapply(X, rnorm, mean = input$mu, sd = input$sigma),
+      X_n = replicate(input$nIC, rnorm(n = input$n, mean = input$mu, sd = input$sigma), simplify = FALSE),
       L = sapply(X_n,compute_lb,alpha = input$alpha / 100, lambda = input$lambda, parameter = input$parameter),
       U = sapply(X_n,compute_ub,alpha = input$alpha / 100, lambda = input$lambda, parameter = input$parameter),
       M = switch(input$parameter,
-                 moy = sapply(X_n, mean),
-                 var = sapply(X_n, var)
-      )
+                  moy = sapply(X_n, mean),
+                  var = sapply(X_n, var)
+                 ),
+      missed = switch(input$parameter,
+                      moy = input$mu < L | input$mu > U,
+                      var = input$sigma < L | input$sigma > U)
+      
     )
-    subset(tib, select = -X_n)
+    subset(tib, select = - X_n)
   })
 
   output$table3 <-renderTable({
@@ -388,11 +429,28 @@ et ", 1-(input$alpha/100)*(1-input$lambda), sep=""),
   })
 
   output$CIPlot <-renderPlot({
-    ggplot(tabnech(), aes(x = M, y = X)) +
-      geom_point(size = 4) +
-      geom_errorbarh(aes(xmax = U, xmin = L))
+    p<- ggplot(tabnech(), aes(x = M, y = X), color = "blue")
+    p + geom_point(size = 4) +
+      geom_errorbarh(aes(xmax = U, xmin = L, color = missed)) +
+      scale_color_discrete(direction = -1) +
+      geom_vline( xintercept = switch(input$parameter,
+                                      moy = input$mu,
+                                      var = input$sigma), color = "red")
+    
   })
+  
+  # tabnech2 = as.data.frame (tabnech)
+  # 
 
+  output$percentage <- renderTable ({
+    tibble (
+      percentage = length(tabnech[["missed"]])/input$nIC*100,
+    )
+  })
+  
+  output$msg1CIdance <- renderText(
+    "Percentage of CI wich do not contain the parameter to estimate (percentage of missed) :"
+  )
 }
 shinyApp(ui = ui, server = server)
 
