@@ -8,7 +8,7 @@ library(ggplot2)
 library(tidyverse)
 library(tibble)
 library(dplyr)
-# library (shinyjs)
+library (shinyjs)
 # library(hablar)
 
 
@@ -23,6 +23,8 @@ ui <- fluidPage(
 
     # Sidebar panel for inputs ----
     sidebarPanel(
+      
+      shinyjs::useShinyjs(),
 
       # titlePanel("Sample simulation :"),
       p("Choose the value of the mean, and the value of the standard deviation of the normal distribution"),
@@ -169,16 +171,6 @@ compute_ub <- function(X_n,alpha,lambda,parameter){
 
 eps0 <- .Machine$double.eps
 
-# f1 <- function (X_n,U,L,mu){
-#   for (i in range(length(X_n))){
-#     if (U[i]<mu){
-#       return (U[i])
-#     } else if(L[i]>mu){
-#       return (L[i])
-#     }
-#   }
-# }
-
 # Define server logic required to draw the distribution ----
 server <- function(input, output, session) {
 
@@ -234,6 +226,33 @@ server <- function(input, output, session) {
            )
     )
   })
+  
+  # observeEvent(input$dist, {
+  #   if (input$dist != "negbin")
+  #     updateSliderInput(
+  #       session = session,
+  #       inputId = "variance",
+  #       value = if (input$dist == "pois")
+  #         input$mean
+  #       else if (input$dist == "const")
+  #         0
+  #     )
+  #   shinyjs::toggleState(id = "variance", condition = input$dist == "negbin")
+  # })
+  
+  observeEvent(input$criteria, {
+    if (input$criteria != "cenandsym")
+      updateRadioButtons(
+        session = session, 
+        inputId = "center",
+        selected = NULL
+        )
+    shinyjs::toggleState(id = "center", condition = input$criteria == "cenandsym")
+  })
+  
+  
+  
+  # toggleState (input$center, condition = observe(input$criteria == "cenandsym"))
 
   lambdaopt_mode_var <-reactive({uniroot(
     f = ci_centered_symmetric_varmode,
@@ -439,14 +458,12 @@ et ", 1-(input$alpha/100)*(1-input$lambda), sep=""),
     
   })
   
-  # tabnech2 = as.data.frame (tabnech)
-  # 
-
   output$percentage <- renderTable ({
     tibble (
-      percentage = length(tabnech[["missed"]])/input$nIC*100,
+      percentage = sum(tabnech()$missed) / length(tabnech()$missed)*100,"%"
     )
   })
+  
   
   output$msg1CIdance <- renderText(
     "Percentage of CI wich do not contain the parameter to estimate (percentage of missed) :"
