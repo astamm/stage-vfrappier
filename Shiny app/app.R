@@ -282,7 +282,7 @@ server <- function(input, output, session) {
     alpha = input$alpha / 100
   )$root})
   
-
+##
   #creating a data frame in order to draw the distribution : variables x = choice between two
   #sequances of values abscisse of the distribution ; y = choice between two probability laws
   tab <- reactive({
