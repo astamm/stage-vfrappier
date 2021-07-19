@@ -1,0 +1,496 @@
+---
+title: "Rapport de Stage/Recherche"
+author: "Valentin Frappier"
+date: "26/05/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Rapport de Stage : Sur la sélection des intervalles de confiance
+
+## Introduction
+
+Le but de ce rapport est d'exhiber la non unicité des intervalles de confiance, et de traiter de la question de "meilleur" parmis ces intervalles dans le cas de variables aléatoires pivotales de distributions symétriques, et non symétriques. Dans cette introduction, on rapellera les différentes définitions utiles pour traiter la question, puis on rapellera la méthode de construction des IC avant d'introduire un premier questionnement.
+
+### 1) Rappels et Définitions:
+
+Soit $X$ une variable aléatoire suivant une certaine loi $Y(\theta)$ où $\theta$ est un paramètre que l'on cherche à estimer. Soit $(X_1...X_n)$ un n-échantillon de v.a indépendantes et identiquement distribuées de même loi que $X$ : $(X_1,...,X_n) \sim iid \ Y(\theta)$
+
+Un intervalle de confiance, d'abrévation $IC$, est un intervalle où la valeur de $\theta$ a de bonnes chances de se trouver.
+
+Une variable aléatoire $T$ est qualifiée de pivotale pour $\theta$ si :
+
+-   $T$ est une fonction qui ne dépend que du n-échantillon et de $\theta$, i.e une fois le n-échantillon observé, la v.a pivotale $T$ dépend uniquement de $\theta$.
+
+-   La loi de probabilité de $T$ ne dépend pas de $\theta$.
+
+### 2) Construction d'un intervalle de confiance
+
+L'existance d'une variable aléatoire $T$ pivotale pour $\theta$ facilite grandement la construction d'un intervalle de confiance. En effet, un encadrement de $T$ au niveau $1-\alpha$ nous est donné par la formule vue en cours :
+
+$$ \mathrm{P}(q_\frac{\alpha}{2} \le T(\theta,X_1,...,X_n) \le q_{1-\frac{\alpha}{2}} ) = 1-\alpha $$ en appelant $\alpha$ la probabilité de commettre une erreur de type I et où $q_\alpha$ est le quantile d'ordre $\alpha$ de la distribution de $T$. Cet encadrement nous permet donc de proposer l'intervalle de confiance pour $\theta$ de niveau $1-\alpha$ suivant : $$ IC_{1-\alpha}(\theta) = [T^{-1}(q_\frac{\alpha}{2}) \ ; \ T^{-1}(q_{1-\frac{\alpha}{2}})]$$
+
+Prenons un exemple typique : Soit $X$ une variable aléatoire telle que $X\sim {\sf Norm} (\mu,\sigma ^ 2)$. Une étude a été menée et on a observé les valeurs $(x_1,...,x_n)$ d'un n-échantillon $(X_1,...,X_n) \sim iid \ X$.
+
+Supposons par exemple vouloir estimer la moyenne $\mu$ de la distribution de $X$ en connaisant la valeur de $\sigma$ : $\sigma$ = $\sigma_0$. Une v.a. pivotale pour $\mu$ nous est donné par le TCL : $Z = \sqrt n \frac{\overline{X_n} - \mu}{\sigma_0}$ et $Z\sim{\sf Norm}(0,1)$
+
+Par la formule précédemment énnoncée, on a :
+
+$\mathrm{P}(z_\frac{\alpha}{2} \le Z(\mu,X_1,...,X_n) \le z_{1-\frac{\alpha}{2}} ) = 1-\alpha$
+
+$\Leftrightarrow \mathrm{P}(z_\frac{\alpha}{2} \le \sqrt n \ \frac{\overline{X_n} - \mu}{\sigma_0} \le z_{1-\frac{\alpha}{2}} ) = 1-\alpha$
+
+$\Leftrightarrow \mathrm{P}(-\ z_{1-\frac{\alpha}{2}} \le \sqrt n \ \frac{ \mu - \overline{X_n}}{\sigma_0} \le -\ z_\frac{\alpha}{2}) = 1-\alpha$
+
+$\Leftrightarrow \mathrm{P}( \overline{X_n} - \frac{\sigma_0}{\sqrt n}\ z_{1-\frac{\alpha}{2}} \le \mu\le \overline{X_n} - \frac{\sigma_0}{\sqrt n}\ z_{\frac{\alpha}{2}})= 1-\alpha$
+
+La distribution de Z (loi normale centré réduite) étant une loi symétrique [et centrée en 0]{.ul}, alors on a la relation $-z_\frac{\alpha}{2} = z_{1-\frac{\alpha}{2}}$
+
+Ainsi : $\mathrm{P}( \overline{X_n} - \frac{\sigma_0}{\sqrt n}\ z_{1-\frac{\alpha}{2}} \le \mu\le \overline{X_n} + \frac{\sigma_0}{\sqrt n}\ z_{1-\frac{\alpha}{2}})= 1-\alpha$ ce qui nous amène à proposer l'intervalle de confiance pour $\mu$ de niveau $1-\alpha$ suivant : $$ IC_{1-\alpha}(\mu) = [ \overline{X_n} - \frac{\sigma_0}{\sqrt n}\ z_{1-\frac{\alpha}{2}} \ ;\overline{X_n} + \frac{\sigma_0}{\sqrt n}\ z_{1-\frac{\alpha}{2}}]$$
+
+### 3) Premier questionnement
+
+Il convient donc d'affirmer qu'il est aisé de construire des intervalles de confiances de niveau $1-\alpha$ grâce à la méthode ci-dessus. Mais d'où vient cette fameuse égalité : $\mathrm{P}(q_\frac{\alpha}{2} \le T(\theta,X_1,...,X_n) \le q_{1-\frac{\alpha}{2}} ) = 1-\alpha$ ?
+
+Par définition d'une densité de probabilité, pour toute v.a. continue $T$, $\mathrm{P}(-\infty \le T\le \infty) = 1$. Si l'on prends l'exemple d'une loi normale centrée réduite, on voit bien que l'aire sous la courbe est 1 sous réserve que les queues de la distribution s'étendent à l'infini (Par propriété des densités de probabilités, l'aire sous la courbe est 1).
+
+Pour obtenir l'égalité $\mathrm{P}(L \le T\le U) = 1-\alpha$, on conviendra qu'il suffit de retrancher $\alpha /2$ des deux côtés de la distribution pour avoir une aire sous la courbe de $1-\alpha$ ce qui explique que $\mathrm{P}(q_\frac{\alpha}{2} \le T(\theta,X_1,...,X_n) \le q_{1-\frac{\alpha}{2}} ) = 1-\alpha$.
+
+Mais est-ce là le seul moyen d'obtenir un encadrement de $T$ au niveau $1-\alpha$? Graphiquement, est-ce là le seul découpage de l'aire sous la courbe possible pour avoir une aire centrale de $1-\alpha$? Ce qui revient à se poser la question : les bornes L et U dans le paragraphe précédent sont-elles uniques?
+
+On se convaincra assez rapidement que la réponse à ces questions est non.
+
+En effet on remarque qu'il suffit de retrancher d'un côté une certaine aire A et de la rajouter de l'autre côté pour avoir encore une aire centrale de $1-\alpha$ , tout en ayant des quantiles différents pour encadrer $T$ . Cet exemple simple nous permet de mettre en lumière la proposition suivante : Il n'y a pas unicité des intervalles de confiances.
+
+Mais alors, si on peut construire ce qui semble, à première vue, être une infinité d'intervalles de confiances, on vient à se demander lequel parmi tous ces intervalles peut être qualifié de "meilleur", et c'est sur cette question que ce stage va porter.
+
+Encore faudrait-il définir en quoi un intervalle de confiance est "meilleur" qu'un autre. On liste ici les caractéristiques qui nous semblent les plus interessantes et que l'on pourrait attendre du meilleur des intervalles de confiance :
+
+-   Le meilleur IC est le plus centré :
+
+    <div>
+
+    -   sur le mode (i.e l'intervalle est centré sur la valeur que X a le plus de chance de prendre)
+
+    -   sur la moyenne
+
+    -   sur la médiane
+
+    </div>
+
+    et est donc au passage symétrique
+
+-   Le meilleur IC est celui dont la longueur est minimale (précision de l'estimation du paramètre)
+
+[Généralisation des intervales de confiances de niveau]{.ul} $1-\alpha$ :
+
+Puisque il n'y a pas unicité des intervalles de confiances, on peut les généraliser :
+
+$\mathrm{P}(q_{\lambda\alpha} \le T(\theta,X_1,...,X_n) \le q_{A(\alpha)}) = 1-\alpha$
+
+$\Leftrightarrow A(\alpha)-\lambda\alpha=1-\alpha$
+
+$\Leftrightarrow A(\alpha) = 1-\alpha(1-\lambda)$
+
+D'où la formule d'encadrement : $\mathrm{P}(q_{\lambda\alpha} \le T(\theta,X_1,...,X_n) \le q_{1-\alpha(1-\lambda)} ) = 1-\alpha$ qui nous amène à la formule généralisée d'un intervalle de confiance de niveau $1-\alpha$ :
+
+$$IC_{1-\alpha}(\theta) = [T^{-1}(q_{\lambda\alpha})\ ;\ T^{-1}(q_{1-\alpha(1-\lambda)}) ]$$
+
+## Le cas des distributions symétriques
+
+Pour un n-échantillon suivant une distribution gaussiènne (cas principal vu en cours), on s'interesse généralement à l'estimation de la moyenne ou de la variance. Pour estimer la moyenne, que l'on connaisse ou non l'écart type, quelques v.a pivotales nous sont données par le Théorème Central Limite. Ces v.a suivent des distributions symétriques type loi Normale ou loi de Student.
+
+[**Proposition :**]{.ul} Pour une v.a. pivotale $T$ de distribution **symétrique** , le meilleur des intervalle de confiance pour chacun des critères précédemment énoncé est obtenu à partir des quantiles d'ordre $\frac{\alpha}{2}$ et $1-\frac{\alpha}{2}$ de la distribution de $T$ donc pour $\lambda = 1/2$.
+
+[**Preuve :**]{.ul}
+
+1.  [Centralité]{.ul} et symétrie : Pour une distribution symétrique, la moyenne, la médiane et le mode sont confondus. Ainsi, si $\lambda = 1/2$ , $q_{1-\alpha(1-\lambda)} = q_{1-\frac{\alpha}{2}}$ et $q_{\lambda\alpha} = q_{\frac{\alpha}{2}}$. La variable pivotale ayant été obtenue par le théorème centrale limite, elle est de la forme $\sqrt n \frac{\overline{X_n}- \mathbb{E}[X_n]}{\sqrt {\mathbb{V}(X_n)} }$ . Un intervalle de confiance de niveau $1-\alpha$ pour la moyenne est donné par $IC_{1-\alpha}(\mu) = [ \overline{X_n} - A  ;\overline{X_n} + A]$ où A est une fonction de $q_{\frac{\alpha}{2}}$. On a bien que $\frac{(\overline{X_n}-A)\ +\ (\overline{X_n}+A)}{2} = \frac{2\times\overline{X_n}}{2}=\overline{X_n}=\mu=\mathbb{E}[X_n]$ d'où la centralité.
+
+2.  **Longueur de l'intervalle :** On supposera dans cette partie de la démonstration que $T$ est continue, croissante et linéaire, et que sa distribution est unimodale (Il nous apparaît évident qu'il n'est pas pratique d'utiliser une statistique pivotale dont la distribution serait multimodale pour construire un intervalle de confiance pour un paramètre). On appellera $F$ la fonction de répartition de $T$ et $f$ sa densité de probabilité.
+
+Soit $l_{n,\alpha}(\lambda)$ la longueur de l'intervalle de confiance :
+
+$l_{n,\alpha}(\lambda) = T^{-1}(q_{1-\alpha(1-\lambda)}) - T^{-1}(q_{\lambda\alpha}) = T^{-1}(q_{1-\alpha(1-\lambda)}-q_{\lambda\alpha})$ par linéarité de $T$ donc de $T^{-1}$ .
+
+Si la distribution de T est centrée en 0, on a la relation : $q_x = -q_{1-x}$ . Donc $l_{n,\alpha}(\lambda)= T^{-1}(-q_{\alpha(1-\lambda)}-q_{\lambda\alpha})$
+
+Si la distribution de T n'est pas centrée en 0, on a la relation $q_{1-\alpha(1-\lambda)}-\mu = \mu-q_{\alpha(1-\lambda)}$ où $\mu$ est le centre de la distribution. Donc $l_{n,\alpha}(\lambda)= T^{-1}(2\mu- q_{\alpha(1-\lambda)}-q_{\lambda\alpha})$
+
+On distingue 3 cas : $\alpha = 0$ , $\alpha=1$ ,et $\alpha\in]0,1[$ .
+
+-   Lorsque $\alpha = 0$, $l_{n,\alpha}(\lambda) = T^{-1}(q_{1}-q_{0})= +\infty$
+
+-   Lorsque $\alpha=1$, $l_{n,\alpha}(\lambda) =T^{-1}(q_{1-1+\lambda)}) - T^{-1}(q_{\lambda}) = 0$
+
+-   Supposons que $\alpha\in]0,1[$ . Alors si $\exists \ \lambda^*$ tel que $\forall \ \lambda \in [0\ ;1]$ : $r(\lambda^*) \le r(\lambda)$, alors par croissance de $T$ donc de $T^{-1}$, $$T^{-1}(r(\lambda^*)) \le T^{-1}(r(\lambda))$$
+
+Ainsi, minimiser $l_{n,\alpha}(\lambda)$, reviens à minimiser :
+
+$g_{1,\alpha}(\lambda) := - [q_{\alpha(1-\lambda)}+ \ q_{\lambda\alpha}] = - [F^{-1}(\alpha(1-\lambda)) \ +\ F^{-1}(\lambda\alpha))]$ lorsque la distribution de T est centrée en 0, et à minimiser $g_{2,\alpha}(\lambda) := - [q_{\alpha(1-\lambda)}+ \ q_{\lambda\alpha}-2\mu] = - [F^{-1}(\alpha(1-\lambda)) \ +\ F^{-1}(\lambda\alpha))-2\mu]$ lorsqu'elle est centrée en $\mu\ne0$
+
+Trouvons un minimum pour $g_{1,\alpha}(\lambda)$ et pour $g_{2,\alpha}(\lambda)$, c'est à dire un maximum pour $h_{1,\alpha}(\lambda) := F^{-1}(\alpha(1-\lambda)) \ +\ F^{-1}(\lambda\alpha))$ et pour $h_{2,\alpha}(\lambda) := F^{-1}(\alpha(1-\lambda)) \ +\ F^{-1}(\lambda\alpha))-2\mu$.
+
+Il est donc de bon goût d'effectuer une recherche d'extrêmas classique : on dérive $h_{\alpha}(\lambda)$ et on résout $\frac{dh_{1,\alpha}(\lambda)}{d\lambda}=\frac{dh_{2,\alpha}(\lambda)}{d\lambda}=\frac{dh_{i,\alpha}(\lambda)}{d\lambda} =0$
+
+$$
+\frac{dh_{i,\alpha}(\lambda)}{d\lambda}= \frac{dF^{-1}(\alpha(1-\lambda))}{d \lambda} + \frac{dF^{-1}(\lambda\alpha)}{d\lambda}
+$$
+
+On se sert de la relation
+
+$FoF^{-1}(x)=x \Leftrightarrow [FoF^{-1}]'(x)=1 \Leftrightarrow F'oF^{-1} \times (F^{-1})'(x) =1 \Leftrightarrow (F^{-1})'(x)= \frac{1}{F'(F^{-1})(x)} = \frac {1}{f(F^{-1})(x)}$ pour obtenir la dérivé de $F^{-1}(x)$ et ainsi l'égalité suivante :
+
+$$
+\frac{dh_{i,\alpha}(\lambda)}{d\lambda}= \frac{\alpha}{f(F^{-1}(\lambda\alpha))} - \frac{\alpha}{f(F^{-1}(\alpha(1-\lambda)))}
+$$
+
+$$
+= \frac{\alpha[f(F^{-1}(\alpha(1-\lambda)))-f(F^{-1}(\lambda\alpha))]}{f(F^{-1}(\alpha(1-\lambda)))f(F^{-1}(\lambda\alpha))}
+$$
+
+Recherche des extrêma :
+
+Comme $\alpha \ge 0$ et $f(x) \ge 0 \ \forall \ x$,
+
+$$
+\frac{dh_{i,\alpha}(\lambda)}{d\lambda}= 0 \Leftrightarrow f(F^{-1}(\alpha(1-\lambda)))-f(F^{-1}(\lambda\alpha)) = 0 \Leftrightarrow f(F^{-1}(\alpha(1-\lambda))) =f(F^{-1}(\lambda\alpha))
+$$
+
+Or, si la distribution de T est centrée en 0 et symétrique, $f(x) = f(y) \Leftrightarrow x = \pm \ y$ donc on a les deux cas suivant :
+
+-   $F^{-1}(\alpha(1-\lambda)) = F^{-1}(\lambda\alpha) \Leftrightarrow \alpha(1-\lambda) = \lambda\alpha \Leftrightarrow 2\lambda = 1 \Leftrightarrow \lambda = 1/2$
+
+-   $F^{-1}(\alpha(1-\lambda)) = -\ F^{-1}(\lambda\alpha) \Leftrightarrow F^{-1}(\alpha(1-\lambda)) = F^{-1}(1-\lambda\alpha) \Leftrightarrow \alpha(1-\lambda) = 1-\lambda\alpha \Leftrightarrow \alpha = 1$ ce qui contredit notre hyphothèse de $\alpha \in ]0 \ ;1[$
+
+Ainsi, $\lambda = 1/2$ est le seul extremum de $h_{1,\alpha}$.
+
+Si $T$ est centrée sur $\mu\ne0$, alors $f(x)=f(y)\Leftrightarrow x=\mu\pm y$ ..............A l'aide !
+
+Ainsi, $\lambda = 1/2$ est le seul extremum de $h_{\alpha}$ , donc de $g_{\alpha}$ , donc de $l_{n,\alpha}$ .
+
+Montrons maintenant que $\lambda = 1/2$ est un maximum de $h_{\alpha}$ :
+
+$$
+\frac{d^2h_{\alpha}(\lambda)}{d\lambda^2} = \frac{\alpha \times[[f(q_{\alpha(1-\lambda)})-f(q_{\lambda\alpha})]'f(q_{\lambda\alpha})f(q_{\alpha(1-\lambda)})-(f(q_{\alpha(1-\lambda)})-f(q_{\lambda\alpha}))([f(q_{\lambda\alpha})]'f(q_{\alpha(1-\lambda)})+[f(q_{\alpha(1-\lambda)})]'f(q_{\lambda\alpha}))]}{[f(q_{\alpha(1-\lambda)})f(q_{\lambda\alpha})]^2}
+$$
+
+$$
+= \frac{\alpha \times [(f(q_{\alpha(1-\lambda)}))'f(q_{\lambda\alpha})^2-f(q_{\alpha(1-\lambda)})^2(f(q_{\lambda\alpha}))']}{[f(q_{\alpha(1-\lambda)})f(q_{\lambda\alpha})]^2}
+$$
+
+On cherche le signe de $\frac{d^2h_{\alpha}(\lambda)}{d\lambda^2}$ évalué en $\lambda=1/2$ :
+
+On a $\alpha \ge 0$ et le dénominateur de $\frac{d^2h_{\alpha}(\lambda)}{d\lambda^2}$ est positif comme carré. Alors, $\frac{d^2h_{\alpha}(\lambda)}{d\lambda^2}$ est de même signe que $(f(q_{\alpha(1-\lambda)}))'f(q_{\lambda\alpha})^2-f(q_{\alpha(1-\lambda)})^2(f(q_{\lambda\alpha}))'$ .
+
+Or, par parité de f,
+
+$$
+[f(q_{\alpha(1-\lambda)})]'f(q_{\lambda\alpha})2+f(q_{\alpha(1-\lambda)})2[f(q_{\lambda\alpha})]'=[f(q_{1-\alpha(1-\lambda)})]'f(q_{\lambda\alpha})2-f(q_{1-\alpha(1-\lambda)})2[f(q_{\lambda\alpha})]'
+$$
+
+et lorsque $\lambda = 1/2$ ,
+
+$[f(q_{1-\alpha(1-\lambda)})]'f(q_{\lambda\alpha})^2+f(q_{1-\alpha(1-\lambda)})^2[f(q_{\lambda\alpha})]' = [f(q_{1-\frac{\alpha}{2}})]'f(q_{\frac{\alpha}{2}})^2-f(q_{\frac{1-\alpha}{2}})^2[f(q_{\frac{\alpha}{2}})]'$ .
+
+-   $[f(q_{1-\alpha(1-\lambda)})]' < 0$ car $f$ est décroissante sur $]0 \ ; \infty[ \ \ni q_{1-\frac{\alpha}{2}}$
+
+-   $[f(q_{\frac{\alpha}{2}})]'>0$ car $f$ est décroissante sur $]\infty \ ; 0[ \ \ni q_{\frac{\alpha}{2}}$
+
+Ainsi, on a $[f(q_{1-\frac{\alpha}{2}})]'f(q_{\frac{\alpha}{2}})^2+f(q_{\frac{1-\alpha}{2}})^2[f(q_{\frac{\alpha}{2}})]'<0$ d'où $\frac{d^2h_{\alpha}(\lambda)}{d\lambda^2}<0$ donc $\lambda=1/2$ est un maximum pour $h_{\alpha}$ et puisque $g_\alpha = - \ h_{\alpha}$ , alors $\lambda=1/2$ est un minimum pour $g_\alpha$ , donc pour $l_{n,\alpha}$ .
+
+Fin de la preuve
+
+## Le cas des distributions asymétriques
+
+Les distributions asymétriques ne possèdant pas les mêmes propriétés que les distributions symétriques, déterminer théoriquement le meilleur intervalle de confiance, pour chacun des 2 critères ci-dessus (Intro, partie 3), semblait être une tâche trop ardue. Nous avons donc choisit d'éffectuer ces calculs par ordinateur. Afin de convaincre le lecteur, nous avons fait le choix d'illustrer nos propos par une application web réalisée au moyen de la bibliothèque shiny du langage R.
+
+## Illustration de la problématique et des questionnement via une application Shiny
+
+Nous tenions à convaincre l'utilisateur des propos évoqués plus haut et on nous a proposé d'illustrer le problème par une application créée avec la bibliothèque Shiny de R. Voici ce que nous souhaitions que cette application puisse réaliser :
+
+-   Dans un menu à gauche de l'espace d'affichage, l'utilisateur peut tout d'abord choisir une valeur pour la moyenne et l'écart type de la loi normale que suivra notre variable à l'étude précédemment nommée $X$.
+
+-   Secondement, l'utilisateur peut choisir la taille $n$ de l'échantillon puis quel paramètre de la loi normale il souhaite estimer entre la moyenne et la variance. L'application affiche alors, dans un onglet plot, la distribution que suit la variable pivotale servant à estimer ce paramètre.
+
+-   Ensuite, et dans le but d'illustrer la non unicité des intervalles de confiance de même niveau, l'utilisateur peut sélectionner la probabilité $\alpha$ de commettre une erreur de type I et le facteur $\lambda$ permettant de calculer et d'afficher les quantiles d'ordre $\lambda \alpha$ et $1-\alpha(1-\lambda)$.
+
+    L'application colore alors les queues de la distribution en bleue et l'aire entre les quantiles, valant $1-\alpha$, en rose. L'utilisateur peut alors jouer sur la valeur de $\lambda$ et constater l'évolution des quantiles, tout en gardant une zone centrale (en rose) d'aire $1-\alpha$.
+
+-   Pour traiter de la question du meilleur IC parmis les intervalles générés par ces nombreuses paires de quantiles, l'utilisateur peut choisir par quel critère, centré ou de longueur minimale, l'intervalle de confiance sera déterminé. L'application affiche alors sur le même graphique la paire de quantiles correspondant au meilleur intervalle de confiance pour le critère sélectionné et pour la valeur de alpha choisie.
+
+    Dans le cas où le critère "centré" aurait été sélectionné, l'utilisateur peut choisir entre 3 quantité sur lesquelles son intervalle devrait se centrer : le mode, la moyenne ou la médiane.
+
+    (Dans le cas où le critère "longueur minimale" aurait été sélectionné, les boutons de sélections des quantités sur lesquelles se centrer sont grisées et il est impossible de les sélectioner.)
+
+    -   On rappelle que pour un n-échantillon suivant une loi normale de moyenne $\mu$ et de variance ${\sigma}^2$ , une des manière de construire un intervalle de confiance pour la moyenne de niveau $1-\alpha$ est de se servir de la formule suivante :
+
+        $\mathrm{P}( \overline{X_n} - \frac{S_{n-1}}{\sqrt n} \ t_{sup} \le \mu\le \overline{X_n} - \frac{S_{n-1}}{\sqrt n}\ t_{inf})= 1-\alpha$. Ainsi, la longueur de l'intervalle de confiance construit avec cette formule est $l_{\mu}=\frac{S_{n-1}}{\sqrt n}(t_{sup}-t_{inf})$. Trouver l'intervalle de confiance le plus petit revient alors à déterminer la valeur optimale $\lambda_{opt}$ de $\lambda$ pour laquelle la fonction $l_{\mu}$ est minimale. De même, si $\mathrm{P}( \frac{(n-1)S_{n-1} \ ^2}{q_{sup}} \le \sigma^2\le \frac{(n-1)S_{n-1} \ ^2}{q_{inf}})= 1-\alpha$ permet de construire un IC d'ordre $1-\alpha$ pour $\sigma ^2$, alors trouver l'intervalle de confiance le plus petit revient alors à déterminer la valeur optimale $\lambda_{opt}$ de $\lambda$ pour laquelle la fonction $l_{\sigma}=(n-1)S_{n-1} ^2 (\frac{1}{q_{inf}} - \frac{1}{q_{sup}})$ est minimale.
+
+        Nous avons effectué cette recherche grâce à la fonction optimize de R. Cette fonction parcours un intervalle choisit par l'utilisateur de la borne inf à la borne sup à la recherche d'un maximum ou d'un minimum d'une fonction donnée en arguments par l'utilisateur.
+
+    -   Pour le critère de centrage et de symétrie de l'intervalle de confiance : en nommant $U$ la borne supérieur de l'intervalle de confiance construit et en nommant $L$ sa borne inférieur, on considère qu'un intervalle est centré sur un réel $C$ si : $U-C = C-L$.
+
+        Trouver l'intervalle de confiance le plus centré sur $C$ revient alors à déterminer la valeur optimale $\lambda_{opt}$ de $\lambda$ pour laquelle $U + L -2C=0$.
+
+        Lorsque l'on cherche à estimer la moyenne, cela revient à déterminer la valeur optimale $\lambda_{opt}$ de $\lambda$ pour laquelle $2 \overline{X_n} - \frac{2\times S_{n-1}}{\sqrt n}(t_{1-\alpha(1-\lambda)}+t_{\lambda\alpha}) - 2 \overline{X_n}=0$ puisque, pour une distribution syétrique, la moyenne, la médiane et le mode sont confondus ($C=\overline{X_n}$).
+
+        $\Leftrightarrow t_{1-\alpha(1-\lambda)}=-t_{\lambda\alpha}$
+
+        $\Leftrightarrow t_{1-\alpha(1-\lambda)}= t_{1-\lambda\alpha}$ et, par croissance de la fonction quantile,
+
+        $\Leftrightarrow 1-\alpha(1-\lambda)=1-\lambda\alpha$
+
+        $\Leftrightarrow \lambda =1/2$.
+
+        Ce résultat théorique confirme bien les résultats obtenus avec notre programme. Le lecteur pourra s'en assurer en lançant l'application et en sélectionnant "mean" puis "centered and symétrical".
+
+        Lorsque l'on cherche à estimer la variance, cela revient à déterminer la valeur optimale $\lambda_{opt}$ de $\lambda$ pour laquelle $(n-1)S_{n-1} \ ^2 (\frac{1}{q_{inf}} + \frac{1}{q_{sup}}) - 2 C=0$. On rapelle que $C$ représente la quantité sur laquelle l'utilisateur souhaite centrer son intervalle de confiance.
+
+        Etant donné que :
+
+        <div>
+
+        -   $\sigma^2 = mean(S_{n-1} \ ^2)$
+
+        -   $\sigma^2 = \frac{med(S_{n-1} \ ^2)}{(1-\frac{2}{9(n-1)})^3}$, et
+
+        -   $\sigma^2 = \frac{n-1}{n-3}mode(S_{n-1} \ ^2)$
+
+        </div>
+
+        on propose, comme centre $C$ potentiels, les grandeurs $C_{mode} = \frac{n-1}{n-3}S_{n-1} \ ^2$, $C_{moy} = S_{n-1} \ ^2$ et $C_{med} = \frac{S_{n-1} \ ^2}{(1-\frac{2}{9(n-1)})^3}$ correspondant aux abscisses respectives du mode, de la moyenne et de la variance de la distribution (ici, chi-deux pour la variance). Déterminer la valeur optimale $\lambda_{opt}$ de $\lambda$ pour laquelle l'IC est le plus centré sur $C$ revient donc à chercher une racine de $(n-1)S_{n-1} \ ^2 (\frac{1}{q_{inf}} + \frac{1}{q_{sup}}) - 2 C$.
+
+    -   Ceci est possible grâce à la fonction "uniroot" de R. Cette fonction parcours un intervalle choisi par l'utilisateur à la recherche de la racine d'une fonction f également choisie par l'utilisateur (ici, la fonction ci-dessus).
+
+    -   Dans un soucis de détail, voici la fonction nous permettant de calculer $\lambda_{opt}$ pour chaque situation:
+
+        ```{r}
+        lambda_opt <- reactive({
+            switch(input$criteria,
+                   cenandsym = switch(input$parameter,
+                                      moy = uniroot(
+                                        f = ci_centered_symmetric_mean,
+                                        interval = c(eps0, 1 - eps0),
+                                        n = input$n,
+                                        alpha = input$alpha / 100
+                                      )$root,
+                                      var = switch(input$center,
+                                                   mode = uniroot(
+                                                     f = ci_centered_symmetric_varmode,
+                                                     interval = c(eps0, 1 - eps0),
+                                                     n = input$n,
+                                                     alpha = input$alpha / 100
+                                                   )$root,
+                                                   
+                                                   mean = uniroot(
+                                                     f = ci_centered_symmetric_varmean,
+                                                     interval = c(eps0, 1 - eps0),
+                                                     n = input$n,
+                                                     alpha = input$alpha / 100
+                                                   )$root,
+                                                   
+                                                   med = uniroot(
+                                                     f = ci_centered_symmetric_varmed,
+                                                     interval = c(eps0, 1 - eps0),
+                                                     n = input$n,
+                                                     alpha = input$alpha / 100
+                                                   )$root
+                                      )
+                                      
+                   ),
+                   minl = switch(input$parameter,
+                                 moy = optimise(
+                                   f = ci_minimal_length_mean,
+                                   interval = c(eps0, 1 - eps0),
+                                   n = input$n,
+                                   alpha = input$alpha / 100
+                                 )$minimum,
+                                 var = optimise(
+                                   f = ci_minimal_length_var,
+                                   interval = c(eps0, 1 - eps0),
+                                   n = input$n,
+                                   alpha = input$alpha / 100
+                                 )$minimum
+                   )
+            )
+          })
+        ```
+
+        Les fonctions ci_minimal_length_mean et ci_minimal_length_var correspondent aux longueurs des ICs à minimiser.
+
+        Les fonctions ci_centered_symmetric_mean, ci_centered_symmetric_varmode, ci_centered_symmetric_varmean et ci_centered_symmetric_varmed correspondent aux fonctions $(n-1)S_{n-1} \ ^2 (\frac{1}{q_{inf}} + \frac{1}{q_{sup}}) - 2 C$ , ($C$ valant resp. $C_{mode}$, $C_{moy}$ ou $C_{med}$ selon la grandeur de centrage souhaitée), dont il faut trouver le zéro .
+
+-   Dans un onglet, nomé "Table", est affiché la valeur de lambda optimale pour la combinaison paramètre à estimer + critère sélectionné
+
+-   Nous nous sommes dis que, lorsque le paramètre variance et le critère centré et symétrique sont séléctionné, il serait interessant de voir quel intervalle de confiance aurait la plus petite longueur parmis celui centré sur le mode, celui centré sur la moyenne et celui centré sur la médianne.
+
+    C'est pourquoi, dans un onglet appelé "Summary", nous avons affichée un tableau de 3 ligne et 3 colonnes qui, pour chaque objet de centrage (mode, mean, mediane), affiche le lambda optimal associé à la création du meilleur IC ainsi que la longueur de cette IC.
+
+-   Enfin, dans un dernier onglet nommé CI danse, nous affichons un nombre définit par l'utilisateur d'intervalle de confiance pour le paramètre choisie. Ce dernier peut ainsi visualiser les différents IC obtenus à partir des mêmes inputs précédemment sélectionnés, et constater dans un tableau en dessous que plus le nombre de ces IC augmente, plus la probabilité que ces ICs ne contiennent pas le paramètre à estimer tend vers alpha : le risque de commettre une erreur de type I.
+
+## Ce que j'ai appris
+
+#### Découverte du language informatique R :
+
+-   Les variables
+
+```{r}
+x=1
+y<-2
+var1="val"
+B=TRUE
+#lister les variable
+ls()
+#enlever une variable
+rm(x)
+```
+
+-   Les vecteurs
+
+```{r}
+x1<-c(1,2,3,4,5)
+x2<-c("val","entin")
+x3<-(1:5)
+x4=seq(from=1, to=5, by=1)
+x5=rep(seq(from=1,to=5,by=1),times=3)
+
+#extraction d'éléments
+x1[-3] #extraire tous les éléments de x1 sauf celui en troisième position
+x1[1:4]
+x1[c(1,3)]
+x1[-c(1,3)]
+y[y<4]
+```
+
+-   Les matrices
+
+```{r}
+matrix(c(1,2,3,4,5,6,7,8,9),nrow=3, byrow=TRUE) #Arguments : (valeurs dans la matrice,nb ligne, byrow=TRUE valeurs classées par ligne // byrow=FALSE valeurs classées par colonnes)
+```
+
+```{r}
+mat1<-matrix(1:9,nrow=3,byrow=TRUE)
+mat2<-matrix(c(1,1,1,0,1,1,0,0,1),nrow=3,byrow=TRUE)
+mat1
+mat2
+```
+
+```{r}
+#Produit matriciel
+mat1%*%mat2
+#Inversion matricielle : télécharger le package MASS et utiliser la fonction ginv()
+library(MASS)
+ginv(mat2)
+#Attention : Division par 0 = infinity
+```
+
+```{r}
+#Sélection des éléments dans la matrice :
+mat1
+mat1[2,3] #élément en ligne 2 collone 3
+mat1[c(2,3),2] #éléments aux lignes 2 et 3 et en collone 2
+mat1[2,] #la deuxième ligne
+mat1[,2] #la deuxième colonne
+```
+
+-   Apprentissage sur les bibliothèques ggplot2, tibble et shiny.
+
+```{r}
+#création de dataframe (tableau avec en colonne les variables, et en ligne les observations)
+tab <- tibble(
+      x = seq(-3 * sqrt((input$n-1)/(input$n-3)),
+                  3*sqrt((input$n-1)/(input$n-3)), len = 1000),
+      y = dt(x, df = input$n-1)
+    )
+```
+
+Une fois notre dataframe créée, on peut afficher les résultats et visualiser les données avec ggplot2 :
+
+```{r}
+ ggplot(tab(), aes(x = x, y = y)) +  #prend en arguments une dataframe, un mapping (sous la forme de la fonction aesthetics aes() qui associe un nom à chaque variable) #et trace x en fonction de y
+      geom_line() + 
+      labs(x = "X", y = expression(f[X](x))) #labels sur les côtés du plot.
+```
+
+#### Développement d'une application web shiny
+
+Shiny est un package de R qui permet de créer des applications dynamiques pour le web. Une application se divise en deux "parties" ou plus exactement 2 fonctions : une fonction interface utilisateur (ui) et une fonction serveur (server). Dans l'interface utilisateur, on va voir apparaître toutes les entrées que l'utilisateurs peut modifier (inputs), et tous les affichages (output) :
+
+```{r}
+#Création d'une interface utilisateur dans laquelle on implémente différents cadrants (panels), et dans ces cadrants des inputs que l'utilisateur peut modifier à sa guise (Ici un sliderInput mais il en existe beaucoup)
+
+library(shiny)
+# Define UI for app that draws a histogram ----
+ui <- fluidPage(
+  titlePanel("Hello Shiny!"), 
+  
+  sidebarLayout(
+    # Sidebar panel for inputs ----
+    sidebarPanel(
+      # Input: Slider for the number of bins ----
+      sliderInput(inputId = "bins",
+                  label = "Number of bins:",
+                  min = 1,
+                  max = 50,
+                  value = 30)
+    ),
+    # Main panel for displaying outputs ----
+    mainPanel(
+      # Output: Histogram ----
+      plotOutput(outputId = "distPlot")
+    )
+  )
+)
+```
+
+Tout les calculs et les modifications en temps réel des fonctions se font dans le serveur :
+
+```{r}
+server <- function(input, output) {
+#Création de l'output que l'on appelle "distplot". On lui donne l'aspect de graphique grace à la fonction renderplot 
+  output$distPlot <- renderPlot({                  
+    x    <- faithful$waiting
+    bins <- seq(min(x), max(x), length.out = input$bins + 1)
+    
+    hist(x, breaks = bins, col = "#75AADB", border = "white",
+         xlab = "Waiting time to next eruption (in mins)",
+         main = "Histogram of waiting times")
+    #ici, l'histograme se modifie dès que l'utilisateur modifie l'input "bins".
+    })
+}
+# Create Shiny app ----
+shinyApp(ui = ui, server = server)
+```
+
+L'output ainsi créé puis modifée est ensuite affiché dans l'interface utilisateur par la fonction plotOutput("l'output que l'on souhaite afficher"). On génère alors l'application en assignant l'interface utilisateur et le serveur à ui et server dans la fonction shinyApp du package shiny.
+
+Dans notre code, nous avons 3 sliderInputs pour les valeurs de $n$, $\alpha$ et $\lambda$ 1 selectInput pour choisir si l'on veut estimer la moyenne ou la variance et 2 radio buttons : l'un pour choisir le critère de comparaison des IC et l'autre pour choisir sur quel quantité l'IC devrait se centrer.
+
+La modification de n'importe lequel de ces inputs entraîne automatiquement une modification dans le serveur des fonctions prenant comme argument l'input modifié, ce qui provoque un changement graphique dans l'interface utilisateur, et ce sans avoir besoin de réexecuter le programme ou de relancer l'application. Ces modifications automatiques de fonctions sont possibles grace à la fonction reactive ({ }).
+
+Prenons un exemple issue de notre projet :
+
+```{r}
+
+tab <- reactive({
+    tibble(
+      x = switch(
+        input$parameter,
+        moy = seq(-3 * sqrt((input$n-1)/(input$n-3)),
+                  3*sqrt((input$n-1)/(input$n-3)), len = 1000),
+        var = seq((input$n-1) - 3*sqrt(2*input$n-1), (input$n-1) +
+                    3*sqrt(2*input$n-1), len = 1000)
+      ),
+      y = switch(
+        input$parameter,
+        moy = dt(x, df = input$n-1),
+        var = dchisq(x, df = input$n-1)
+      )
+    )
+  })
+
+#tab est une tibble qui s'actualise à chaque fois que le sliderInput "n" est modifié par l'utilisateur
+```
+
+On notera également la fonction "switch", qui représente un des pilier de notre projet. Elle est très utile pour assigner des actions différentes à chaque résultats d'un input proposant plusieurs choix. Dans l'exemple ci-dessus, selon si l'utilisateur a selectionné la moyenne (moy) ou la variance (var) dans le selectInput "parameter", les variables x et y dans tab( ) prennent des valeurs différentes ce qui donne la possibilité de créer 2 dataframe autochangeant et différents avec une seule fonction ! C'est cette fonction qui, appellée dans une fonction ggplot( ), permet de tracer les 2 distribution des variables pivotales proposées pour estimer la moyenne et la variance d'une loi normale.
